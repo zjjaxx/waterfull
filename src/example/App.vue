@@ -2,10 +2,10 @@
   <img alt="Vue logo" src="./assets/logo.png" />
   <HelloWorld msg="Welcome to Your Vue.js + TypeScript App" />
   <waterfull :list="list" :column="3" ref="waterfullRef">
-    <template #item>
+    <template #item="{ item }">
       <div class="product-wrapper">
         <img class="img" src="./assets/logo.png" main-img-tag alt="" />
-        <div class="name"></div>
+        <div class="name">{{ item.name }}</div>
       </div>
     </template>
   </waterfull>
@@ -68,7 +68,6 @@ export default defineComponent({
       setTimeout(async () => {
         list.value = mockData;
         await nextTick();
-        console.log("waterfullRef.value", waterfullRef.value);
         (
           waterfullRef.value as unknown as DefineComponent<
             Record<string, unknown>,
@@ -100,13 +99,14 @@ export default defineComponent({
   margin-top: 60px;
 }
 .product-wrapper {
+  border-radius: 10px;
+  border: 1px solid #999;
   padding: 10px;
   height: 100%;
   box-sizing: border-box;
-  background-color: grey;
 }
 .img {
-  height: 100%;
+  height: auto;
   width: 100%;
 }
 </style>

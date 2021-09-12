@@ -38,7 +38,8 @@ export default defineComponent({
   setup(props) {
     const { column, list } = toRefs(props);
     const waterfull = ref(null);
-    const listStyle: ItemStyle[] = reactive([]);
+
+    const listStyle = ref<ItemStyle[]>([]);
     const listHeight = ref(0);
     watch(
       () => _.cloneDeep(list),
@@ -48,95 +49,58 @@ export default defineComponent({
       }
     );
     const execWaterfull = () => {
-      let imgLoadList: Promise<boolean>[] = [];
-      let imgLazyStartIndex = 0;
-      let imgLazyEndIndex = 0;
+      //可能存在padding
+      const listWidth = document.defaultView
+        ? parseFloat(
+            document.defaultView.getComputedStyle(
+              waterfull.value as unknown as HTMLElement
+            ).width
+          )
+        : (waterfull.value as unknown as HTMLElement).clientWidth;
+
+      const itemWidth = listWidth / column.value;
+      listStyle.value = list.value.map((item) => ({
+        width: itemWidth + "px",
+        top: "",
+        left: "",
+      }));
       const imgList: HTMLImageElement[] = Array.from(
         document.querySelectorAll(".__list_item__ img[main-img-tag]")
       );
-      //图片懒加载
-      const imgLazy = (imgList: HTMLImageElement[]) => {
-        let _index = 0;
-        let first = true;
+      //图片加载
+      const imgLoad = (imgList: HTMLImageElement[]) => {
         imgList.forEach((img, index) => {
-          //判断图片位子 是否加载
-          console.log(
-            " document.documentElement.clientHeight",
-            img.getBoundingClientRect().top,
-            document.documentElement.clientHeight
-          );
-          if (
-            img.getBoundingClientRect().top <
-            document.documentElement.clientHeight
-          ) {
-            //判断之前是否加载过
-            if (img.src != list.value[index].url) {
-              if (!imgLoadList[index]) {
-                const _img = new Image();
-                _img.src = list.value[index].url;
-                imgLoadList[index] = new Promise((resolve, reject) => {
-                  _img.onload = () => {
-                    (img as HTMLImageElement).src = list.value[index].url;
-                    resolve(true);
-                  };
-                  _img.onerror = () => {
-                    resolve(true);
-                  };
-                });
+          //判断之前是否加载过
+          if (img.src != list.value[index].url) {
+            (img as HTMLImageElement).src = list.value[index].url;
+            img.onload = () => {
+              let parentElement = img.parentElement;
+              while (parentElement) {
+                if (parentElement.className.includes("__list_item__")) {
+                  break;
+                } else {
+                  parentElement = parentElement.parentElement;
+                }
               }
-            }
-          }
-          //图片在视口下方不加载
-          else {
-            if (first) {
-              _index = index;
-              first = false;
-            }
+              const parentElementHeight = parentElement!.offsetHeight;
+              console.log(
+                "parentElementHeight",
+                parentElement,
+                document.defaultView?.getComputedStyle(parentElement!).height
+              );
+              const _index = heightList.findIndex(
+                (item: number) => item == Math.min(...heightList)
+              );
+              listStyle.value[index] = Object.assign(listStyle.value[index], {
+                top: `${heightList[_index]}px`,
+                left: `${_index * itemWidth}px`,
+              });
+              heightList[_index] += parentElementHeight;
+            };
           }
         });
-        return _index;
       };
-      window.onscroll = () => {
-        imgLazyEndIndex = imgLazy(imgList);
-        _execWaterfull();
-      };
-      imgLazyEndIndex = imgLazy(imgList);
-      //等待懒加载图片完成 进行瀑布流布局
-      const _execWaterfull = () => {
-        imgLoadList.length &&
-          Promise.all(imgLoadList).then(() => {
-            let _listHeight = Array.from(
-              document.querySelectorAll(".__list_item__")
-            ).map((item) => (item as HTMLElement).offsetHeight);
-            //可能存在padding
-            const listWidth = document.defaultView
-              ? parseFloat(
-                  document.defaultView.getComputedStyle(
-                    waterfull.value as unknown as HTMLElement
-                  ).width
-                )
-              : (waterfull.value as unknown as HTMLElement).clientWidth;
-
-            const itemWidth = listWidth / column.value;
-            list.value
-              .slice(imgLazyStartIndex, imgLazyEndIndex)
-              .forEach((item: FileItem, index: number) => {
-                const _index = heightList.findIndex(
-                  (item: number) => item == Math.min(...heightList)
-                );
-                listStyle[index + imgLazyStartIndex] = {
-                  height: `${_listHeight[index + imgLazyStartIndex]}px`,
-                  width: `${itemWidth}px`,
-                  top: `${heightList[_index]}px`,
-                  left: `${_index * itemWidth}px`,
-                };
-                heightList[_index] += _listHeight[index + imgLazyStartIndex];
-              });
-            listHeight.value = Math.max(...heightList);
-            imgLazyStartIndex = imgLazyEndIndex;
-          });
-      };
-      _execWaterfull();
+      imgLoad(imgList);
     };
     onMounted(() => {});
     return {

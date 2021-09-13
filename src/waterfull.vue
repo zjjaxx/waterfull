@@ -22,7 +22,7 @@ import {
 } from "vue";
 import _ from "lodash";
 import { FileItem, ItemStyle } from "@/types/index";
-let heightList = [0, 0, 0];
+
 export default defineComponent({
   props: {
     list: {
@@ -38,17 +38,16 @@ export default defineComponent({
   setup(props) {
     const { column, list } = toRefs(props);
     const waterfull = ref(null);
-
     const listStyle = ref<ItemStyle[]>([]);
     const listHeight = ref(0);
+    let heightList = new Array(column.value).fill(0);
     watch(
       () => _.cloneDeep(list),
       () => {
-        //执行瀑布流排列
-        execWaterfull();
+        calcListStyle();
       }
     );
-    const execWaterfull = () => {
+    const calcListStyle = () => {
       //可能存在padding
       const listWidth = document.defaultView
         ? parseFloat(
@@ -63,40 +62,48 @@ export default defineComponent({
         width: itemWidth + "px",
         top: "",
         left: "",
+        loaded: false,
       }));
+    };
+    const execWaterfull = () => {
       const imgList: HTMLImageElement[] = Array.from(
         document.querySelectorAll(".__list_item__ img[main-img-tag]")
       );
+      const calc = (img: HTMLImageElement, index: number) => {
+        let parentElement = img.parentElement;
+        while (parentElement) {
+          if (parentElement.className.includes("__list_item__")) {
+            break;
+          } else {
+            parentElement = parentElement.parentElement;
+          }
+        }
+        const parentElementHeight = parentElement!.offsetHeight;
+        const _index = heightList.findIndex(
+          (item: number) => item == Math.min(...heightList)
+        );
+        listStyle.value[index] = Object.assign(listStyle.value[index], {
+          top: `${heightList[_index]}px`,
+          left: `${_index * parseFloat(listStyle.value[index].width)}px`,
+          loaded: true,
+        });
+
+        heightList[_index] += parentElementHeight;
+      };
       //图片加载
       const imgLoad = (imgList: HTMLImageElement[]) => {
         imgList.forEach((img, index) => {
           //判断之前是否加载过
-          if (img.src != list.value[index].url) {
-            (img as HTMLImageElement).src = list.value[index].url;
-            img.onload = () => {
-              let parentElement = img.parentElement;
-              while (parentElement) {
-                if (parentElement.className.includes("__list_item__")) {
-                  break;
-                } else {
-                  parentElement = parentElement.parentElement;
-                }
-              }
-              const parentElementHeight = parentElement!.offsetHeight;
-              console.log(
-                "parentElementHeight",
-                parentElement,
-                document.defaultView?.getComputedStyle(parentElement!).height
-              );
-              const _index = heightList.findIndex(
-                (item: number) => item == Math.min(...heightList)
-              );
-              listStyle.value[index] = Object.assign(listStyle.value[index], {
-                top: `${heightList[_index]}px`,
-                left: `${_index * itemWidth}px`,
-              });
-              heightList[_index] += parentElementHeight;
-            };
+          if (!listStyle.value[index].loaded) {
+            if (img.complete) {
+              console.log("complate-----", img);
+              calc(img, index);
+            } else {
+              img.onload = () => {
+                console.log("onload-----", img);
+                calc(img, index);
+              };
+            }
           }
         });
       };

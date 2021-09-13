@@ -6,4 +6,5 @@ export interface ItemStyle {
   width: string;
   top: string;
   left: string;
+  loaded: boolean;
 }

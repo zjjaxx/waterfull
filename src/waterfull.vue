@@ -19,6 +19,7 @@ import {
   toRefs,
   computed,
   watch,
+  nextTick,
 } from "vue";
 import _ from "lodash";
 import { FileItem, ItemStyle } from "@/types/index";
@@ -43,8 +44,12 @@ export default defineComponent({
     let heightList = new Array(column.value).fill(0);
     watch(
       () => _.cloneDeep(list),
-      () => {
+      async () => {
+        //重新计算listStyle
         calcListStyle();
+        await nextTick();
+        //执行瀑布流排序
+        execWaterfull();
       }
     );
     const calcListStyle = () => {
@@ -58,12 +63,18 @@ export default defineComponent({
         : (waterfull.value as unknown as HTMLElement).clientWidth;
 
       const itemWidth = listWidth / column.value;
-      listStyle.value = list.value.map((item) => ({
-        width: itemWidth + "px",
-        top: "",
-        left: "",
-        loaded: false,
-      }));
+      listStyle.value = list.value.map((item, index) => {
+        if (listStyle.value[index]) {
+          return listStyle.value[index];
+        } else {
+          return {
+            width: itemWidth + "px",
+            top: "",
+            left: "",
+            loaded: false,
+          };
+        }
+      });
     };
     const execWaterfull = () => {
       const imgList: HTMLImageElement[] = Array.from(
@@ -89,6 +100,7 @@ export default defineComponent({
         });
 
         heightList[_index] += parentElementHeight;
+        listHeight.value = Math.max(...heightList);
       };
       //图片加载
       const imgLoad = (imgList: HTMLImageElement[]) => {
@@ -96,11 +108,9 @@ export default defineComponent({
           //判断之前是否加载过
           if (!listStyle.value[index].loaded) {
             if (img.complete) {
-              console.log("complate-----", img);
               calc(img, index);
             } else {
               img.onload = () => {
-                console.log("onload-----", img);
                 calc(img, index);
               };
             }

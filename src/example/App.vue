@@ -40,18 +40,19 @@ export default defineComponent({
     const api = async () => {
       try {
         const res = await axios.get("/api/getImgs");
-        list.value = res.data;
+        list.value = [...list.value, ...res.data];
       } catch (error) {
         console.log("error is", error);
       }
     };
-    const throttle_api = throttle(api, 1000);
+    //节流
+    const throttle_api = throttle(api, 300);
     const startListenScroll = () => {
-      const windowHeight = document.documentElement.clientHeight;
-      const scrollHeight = document.documentElement.scrollHeight;
       window.onscroll = () => {
-        const scrollTop = document.documentElement.scrollTop;
-        console.log(scrollTop, windowHeight, scrollHeight);
+        const element = document.documentElement || document.body;
+        const windowHeight = element.clientHeight;
+        const scrollHeight = element.scrollHeight;
+        const scrollTop = element.scrollTop;
         if (scrollTop + windowHeight + 30 > scrollHeight) {
           throttle_api();
         }
@@ -59,15 +60,16 @@ export default defineComponent({
     };
     onMounted(async () => {
       await api();
-      await nextTick();
-      (
-        waterfullRef.value as unknown as DefineComponent<
-          Record<string, unknown>,
-          Record<string, unknown>,
-          any
-        >
-      ).execWaterfull();
-
+      // await nextTick()
+      // //执行瀑布流排序
+      // ;(
+      //   waterfullRef.value as unknown as DefineComponent<
+      //     Record<string, unknown>,
+      //     Record<string, unknown>,
+      //     any
+      //   >
+      // ).execWaterfull()
+      //监听触底事件
       startListenScroll();
     });
     return {
@@ -84,6 +86,7 @@ export default defineComponent({
   padding: 0;
   background-color: #eee;
 }
+
 #app {
   font-family: Avenir, Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -96,6 +99,7 @@ export default defineComponent({
   padding: 10px;
   box-sizing: border-box;
   .product {
+    padding-bottom: 10px;
     border-radius: 10px;
     background-color: #fff;
     .img {
@@ -103,17 +107,20 @@ export default defineComponent({
       width: 100%;
     }
     .name {
+      padding: 0 5px;
       margin-top: 5px;
       width: 100%;
       font-size: 14px;
       height: 36px;
       line-height: 18px;
+      box-sizing: border-box;
       overflow: hidden;
       display: -webkit-box; //将对象作为弹性伸缩盒子模型显示;
       text-overflow: ellipsis; //溢出部分用省略号代替
       -webkit-line-clamp: 2; //设置文本显示两行
       -webkit-box-orient: vertical; //从上到下排列子元素;
       white-space: normal;
+      background-color: #fff;
     }
   }
 }

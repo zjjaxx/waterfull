@@ -23,7 +23,7 @@ import {
 } from "vue";
 import _ from "lodash";
 import { FileItem, ItemStyle } from "@/types/index";
-
+import { throttle } from "./util/index";
 export default defineComponent({
   props: {
     list: {
@@ -42,16 +42,13 @@ export default defineComponent({
     const listStyle = ref<ItemStyle[]>([]);
     const listHeight = ref(0);
     let heightList = new Array(column.value).fill(0);
-    watch(
-      () => _.cloneDeep(list),
-      async () => {
-        //重新计算listStyle
-        calcListStyle();
-        await nextTick();
-        //执行瀑布流排序
-        execWaterfull();
-      }
-    );
+    //开始布局
+    const layout = async () => {
+      calcListStyle();
+      await nextTick();
+      execWaterfull();
+    };
+    //重新计算listStyle(item宽度)
     const calcListStyle = () => {
       //可能存在padding
       const listWidth = document.defaultView
@@ -76,6 +73,7 @@ export default defineComponent({
         }
       });
     };
+    //执行瀑布流排序
     const execWaterfull = () => {
       const imgList: HTMLImageElement[] = Array.from(
         document.querySelectorAll(".__list_item__ img[main-img-tag]")
@@ -103,7 +101,7 @@ export default defineComponent({
         listHeight.value = Math.max(...heightList);
       };
       //图片加载
-      const imgLoad = (imgList: HTMLImageElement[]) => {
+      ((imgList: HTMLImageElement[]) => {
         imgList.forEach((img, index) => {
           //判断之前是否加载过
           if (!listStyle.value[index].loaded) {
@@ -116,10 +114,21 @@ export default defineComponent({
             }
           }
         });
-      };
-      imgLoad(imgList);
+      })(imgList);
     };
-    onMounted(() => {});
+    //当list数据发生变化时，重新布局
+    watch(() => _.cloneDeep(list), layout);
+    onMounted(() => {
+      //当窗口大小发生改变时，重新布局
+      const resizeCallback = throttle(() => {
+        console.log("trigger----");
+        //listStyle heightList 重置
+        heightList = new Array(column.value).fill(0);
+        listStyle.value = [];
+        layout();
+      }, 300);
+      window.onresize = resizeCallback;
+    });
     return {
       listStyle,
       waterfull,

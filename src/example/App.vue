@@ -23,7 +23,7 @@ import {
 } from "vue";
 import type { DefineComponent } from "vue";
 import waterfull from "../waterfull.vue";
-import { throttle } from "./util/index";
+import { throttle } from "../util/index";
 import axios from "axios";
 interface FileItem {
   url: string;
@@ -46,29 +46,20 @@ export default defineComponent({
       }
     };
     //节流
-    const throttle_api = throttle(api, 300);
+    const throttle_api = throttle(api, 100);
     const startListenScroll = () => {
       window.onscroll = () => {
         const element = document.documentElement || document.body;
         const windowHeight = element.clientHeight;
         const scrollHeight = element.scrollHeight;
         const scrollTop = element.scrollTop;
-        if (scrollTop + windowHeight + 30 > scrollHeight) {
+        if (scrollTop + windowHeight + 80 > scrollHeight) {
           throttle_api();
         }
       };
     };
     onMounted(async () => {
       await api();
-      // await nextTick()
-      // //执行瀑布流排序
-      // ;(
-      //   waterfullRef.value as unknown as DefineComponent<
-      //     Record<string, unknown>,
-      //     Record<string, unknown>,
-      //     any
-      //   >
-      // ).execWaterfull()
       //监听触底事件
       startListenScroll();
     });

@@ -61,7 +61,7 @@ export default defineComponent({
             ).width
           )
         : (waterfull.value as unknown as HTMLElement).clientWidth;
-
+      console.log("listWidth", document.body.offsetWidth);
       const itemWidth = listWidth / column.value;
       //图片预加载
       const imgsPromise: Promise<boolean>[] = [];
@@ -121,6 +121,7 @@ export default defineComponent({
     //当list数据发生变化时，重新布局
     watch(() => _.cloneDeep(list), layout);
     onMounted(() => {
+      layout();
       //当窗口大小发生改变时，重新布局
       const resizeCallback = throttle(() => {
         //listStyle heightList 重置

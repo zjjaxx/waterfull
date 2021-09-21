@@ -39,17 +39,20 @@ export default defineComponent({
   setup(props) {
     const { column, list } = toRefs(props);
     const waterfull = ref(null);
+    //瀑布流排列样式
     const listStyle = ref<ItemStyle[]>([]);
+    //瀑布流总体高度
     const listHeight = ref(0);
+    //瀑布流排列高度计算相关数组
     let heightList = new Array(column.value).fill(0);
     //开始布局
     const layout = async () => {
-      calcListStyle();
+      await calcListStyle();
       await nextTick();
       execWaterfull();
     };
-    //重新计算listStyle(item宽度)
-    const calcListStyle = () => {
+    //图片预加载 和初始化listStyle
+    const calcListStyle = async () => {
       //可能存在padding
       const listWidth = document.defaultView
         ? parseFloat(
@@ -60,34 +63,47 @@ export default defineComponent({
         : (waterfull.value as unknown as HTMLElement).clientWidth;
 
       const itemWidth = listWidth / column.value;
+      //图片预加载
+      const imgsPromise: Promise<boolean>[] = [];
+
       listStyle.value = list.value.map((item, index) => {
         if (listStyle.value[index]) {
           return listStyle.value[index];
         } else {
+          imgsPromise.push(
+            new Promise((resolve, reject) => {
+              const imgElement = new Image();
+              imgElement.src = item.url;
+              imgElement.onload = () => {
+                resolve(true);
+              };
+              imgElement.onerror = () => {
+                resolve(false);
+              };
+            })
+          );
           return {
             width: itemWidth + "px",
             top: "",
             left: "",
             loaded: false,
+            opacity: 0,
           };
         }
       });
+      await Promise.all(imgsPromise);
     };
     //执行瀑布流排序
     const execWaterfull = () => {
-      const imgList: HTMLImageElement[] = Array.from(
-        document.querySelectorAll(".__list_item__ img[main-img-tag]")
+      const listItemElements: HTMLElement[] = Array.from(
+        document.querySelectorAll(".__list_item__")
       );
-      const calc = (img: HTMLImageElement, index: number) => {
-        let parentElement = img.parentElement;
-        while (parentElement) {
-          if (parentElement.className.includes("__list_item__")) {
-            break;
-          } else {
-            parentElement = parentElement.parentElement;
-          }
+      listItemElements.forEach((element, index) => {
+        //已经执行过瀑布流排序的return
+        if (listStyle.value[index].loaded) {
+          return;
         }
-        const parentElementHeight = parentElement!.offsetHeight;
+        const elementHeight = element.offsetHeight;
         const _index = heightList.findIndex(
           (item: number) => item == Math.min(...heightList)
         );
@@ -95,33 +111,18 @@ export default defineComponent({
           top: `${heightList[_index]}px`,
           left: `${_index * parseFloat(listStyle.value[index].width)}px`,
           loaded: true,
+          opacity: 1,
         });
 
-        heightList[_index] += parentElementHeight;
+        heightList[_index] += elementHeight;
         listHeight.value = Math.max(...heightList);
-      };
-      //图片加载
-      ((imgList: HTMLImageElement[]) => {
-        imgList.forEach((img, index) => {
-          //判断之前是否加载过
-          if (!listStyle.value[index].loaded) {
-            if (img.complete) {
-              calc(img, index);
-            } else {
-              img.onload = () => {
-                calc(img, index);
-              };
-            }
-          }
-        });
-      })(imgList);
+      });
     };
     //当list数据发生变化时，重新布局
     watch(() => _.cloneDeep(list), layout);
     onMounted(() => {
       //当窗口大小发生改变时，重新布局
       const resizeCallback = throttle(() => {
-        console.log("trigger----");
         //listStyle heightList 重置
         heightList = new Array(column.value).fill(0);
         listStyle.value = [];
@@ -144,6 +145,16 @@ export default defineComponent({
   position: relative;
   .__list_item__ {
     position: absolute;
+    transition: all 0.3s ease;
+    animation: show 0.3s ease;
+  }
+}
+@keyframes show {
+  0% {
+    transform: scale(0.7);
+  }
+  100% {
+    transform: scale(1);
   }
 }
 </style>

@@ -7,4 +7,5 @@ export interface ItemStyle {
   top: string;
   left: string;
   loaded: boolean;
+  opacity: number;
 }

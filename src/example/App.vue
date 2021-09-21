@@ -1,10 +1,10 @@
 <template>
   <img alt="Vue logo" src="./assets/logo.png" />
-  <waterfull :list="list" :column="2" ref="waterfullRef">
+  <waterfull :list="listInfo.list" :column="2">
     <template #item="{ item }">
       <div class="product-wrapper">
         <div class="product">
-          <img class="img" :src="item.url" main-img-tag alt="" />
+          <img class="img" :src="item.url" alt="" />
           <div class="name">{{ item.name }}</div>
         </div>
       </div>
@@ -29,24 +29,54 @@ interface FileItem {
   url: string;
   [propName: string]: any;
 }
+interface Params {
+  page: number;
+  [propName: string]: any;
+}
+interface ListInfo {
+  params: Params;
+  list: FileItem[];
+  finish: boolean;
+  loading: boolean;
+}
 export default defineComponent({
   name: "App",
   components: {
     waterfull,
   },
   setup() {
-    let list = ref<FileItem[]>([]);
-    const waterfullRef = ref(null);
+    const listInfo: ListInfo = reactive({
+      list: [],
+      finish: false,
+      loading: false,
+      params: {
+        page: 0,
+        pageSize: 10,
+      },
+    });
     const api = async () => {
+      if (listInfo.loading || listInfo.finish) {
+        return;
+      }
+      listInfo.loading = true;
       try {
-        const res = await axios.get("/api/getImgs");
-        list.value = [...list.value, ...res.data];
+        const params = Object.assign({}, listInfo.params, {
+          page: listInfo.params.page + 1,
+        });
+        const res = await axios.get("/api/getImgs", { params });
+        if (res.data.length) {
+          listInfo.list = [...listInfo.list, ...res.data];
+          listInfo.params.page++;
+        } else {
+          listInfo.finish = true;
+        }
       } catch (error) {
         console.log("error is", error);
       }
+      listInfo.loading = false;
     };
     //节流
-    const throttle_api = throttle(api, 100);
+    const throttle_api = throttle(api, 300);
     const startListenScroll = () => {
       window.onscroll = () => {
         const element = document.documentElement || document.body;
@@ -64,8 +94,7 @@ export default defineComponent({
       startListenScroll();
     });
     return {
-      list,
-      waterfullRef,
+      listInfo,
     };
   },
 });
@@ -96,6 +125,7 @@ export default defineComponent({
     .img {
       height: auto;
       width: 100%;
+      border-radius: 10px 10px 0 0;
     }
     .name {
       padding: 0 5px;

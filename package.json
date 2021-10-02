@@ -1,7 +1,9 @@
 {
-  "name": "waterfull",
-  "version": "0.1.0",
+  "name": "waterfull_next",
+  "version": "0.1.5",
   "private": false,
+  "typings": "./types/index.d.ts",
+  "main": "dist/waterfull.umd.min.js",
   "scripts": {
     "serve": "vue-cli-service serve  ./src/example/main.ts",
     "build": "vue-cli-service build --name waterfull --target lib ./src/index.ts",
@@ -9,6 +11,7 @@
     "lint": "vue-cli-service lint"
   },
   "dependencies": {
+    "@babel/runtime": "^7.15.4",
     "@types/lodash": "^4.14.172",
     "axios": "^0.21.4",
     "core-js": "^3.6.5",
@@ -17,6 +20,8 @@
     "vue": "^3.0.0"
   },
   "devDependencies": {
+    "@babel/plugin-transform-runtime": "^7.15.0",
+    "@babel/runtime-corejs3": "^7.15.4",
     "@types/jest": "^24.0.19",
     "@typescript-eslint/eslint-plugin": "^4.18.0",
     "@typescript-eslint/parser": "^4.18.0",
@@ -47,5 +52,10 @@
       "vue-cli-service lint",
       "git add"
     ]
-  }
+  },
+  "files": [
+    "dist",
+    "types",
+    "README.md"
+  ]
 }

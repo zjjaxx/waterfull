@@ -37,24 +37,4 @@ describe("Waterfull.vue", () => {
     });
     expect(wrapper.findAll(".__list_item__").length).toEqual(5);
   });
-  it("column test", async () => {
-    document.body.innerHTML = `
-      <div style="width:375px;" >
-        <h1>Non Vue app</h1>
-        <div id="app"></div>
-      </div>
-    `;
-    const wrapper = mount(Waterfull, {
-      props: { list: mockList, column: 2 },
-      attachTo: document.getElementById("app"),
-    });
-
-    const sleep = new Promise((resolve, reject) => {
-      setTimeout(() => {
-        resolve(true);
-      }, 3000);
-    });
-    await sleep;
-    console.log("-----------", wrapper.vm.listStyle);
-  });
 });

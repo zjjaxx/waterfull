@@ -13,11 +13,9 @@
 import {
   PropType,
   defineComponent,
-  reactive,
   onMounted,
   ref,
   toRefs,
-  computed,
   watch,
   nextTick,
 } from "vue";
@@ -61,7 +59,7 @@ export default defineComponent({
             ).width
           )
         : (waterfull.value as unknown as HTMLElement).clientWidth;
-      console.log("listWidth", document.body.offsetWidth);
+      console.log("listWidth", document.body);
       const itemWidth = listWidth / column.value;
       //图片预加载
       const imgsPromise: Promise<boolean>[] = [];

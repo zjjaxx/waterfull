@@ -21,8 +21,8 @@ import {
   ref,
   watch,
 } from "vue";
-import type { DefineComponent } from "vue";
-import waterfull from "../waterfull.vue";
+
+import { waterfull } from "../index";
 import { throttle } from "../util/index";
 import axios from "axios";
 interface FileItem {

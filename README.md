@@ -1,5 +1,6 @@
 # waterfull ![example workflow](https://github.com/zjjaxx/waterfull/actions/workflows/webpack.yml/badge.svg)
 
+![pictrue]("../src/example/assets/Untitled.gif")
 ## 描述
 基于vue3.0 的图片瀑布流组件，无需设置图片宽高
 ## 安装

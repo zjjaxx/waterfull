@@ -59,13 +59,21 @@ export default defineComponent({
             ).width
           )
         : (waterfull.value as unknown as HTMLElement).clientWidth;
-      console.log("listWidth", document.body);
       const itemWidth = listWidth / column.value;
       //图片预加载
       const imgsPromise: Promise<boolean>[] = [];
-
       listStyle.value = list.value.map((item, index) => {
         if (listStyle.value[index]) {
+          if (
+            parseFloat(itemWidth + "") !=
+            parseFloat(listStyle.value[index].width)
+          ) {
+            return {
+              ...listStyle.value[index],
+              width: itemWidth + "px",
+              loaded: false,
+            };
+          }
           return listStyle.value[index];
         } else {
           imgsPromise.push(
@@ -121,11 +129,14 @@ export default defineComponent({
     onMounted(() => {
       layout();
       //当窗口大小发生改变时，重新布局
-      const resizeCallback = throttle(() => {
+      const resizeCallback = throttle(async () => {
         //listStyle heightList 重置
         heightList = new Array(column.value).fill(0);
-        listStyle.value = [];
-        layout();
+        calcListStyle();
+        await nextTick();
+        setTimeout(() => {
+          execWaterfull();
+        }, 300);
       }, 300);
       window.onresize = resizeCallback;
     });

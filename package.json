@@ -1,6 +1,6 @@
 {
   "name": "waterfull_next",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "private": false,
   "typings": "./types/index.d.ts",
   "main": "dist/waterfull.umd.min.js",

@@ -21,7 +21,7 @@ import {
 } from "vue";
 import _ from "lodash";
 import { FileItem, ItemStyle } from "@/types/index";
-import { throttle } from "./util/index";
+import { debounce } from "./util/index";
 export default defineComponent({
   props: {
     list: {
@@ -129,7 +129,7 @@ export default defineComponent({
     onMounted(() => {
       layout();
       //当窗口大小发生改变时，重新布局
-      const resizeCallback = throttle(async () => {
+      const resizeCallback = debounce(async () => {
         //listStyle heightList 重置
         heightList = new Array(column.value).fill(0);
         calcListStyle();
